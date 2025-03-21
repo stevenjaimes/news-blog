@@ -3,29 +3,33 @@ require __DIR__ . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// Verifica si la variable está cargada
-if (getenv('NEWS_API_KEY')) {
-    echo "NEWS_API_KEY está cargada: " . getenv('NEWS_API_KEY');
-} else {
-    echo "NEWS_API_KEY NO está cargada.";
+// Cargar variables de entorno solo en desarrollo
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
 }
 
-$newsApiKey = getenv('NEWS_API_KEY');
+// Acceder a la variable de entorno NEWS_API_KEY
+$newsApiKey = $_ENV['NEWS_API_KEY'] ?? $_SERVER['NEWS_API_KEY'] ?? null;
+
+if (!$newsApiKey) {
+    die("Error: La variable de entorno NEWS_API_KEY no está configurada.");
+}
+
+// Construir la URL de la API
 $newsApiUrl = "https://newsapi.org/v2/top-headlines?country=us&apiKey=$newsApiKey";
 
-
+// Iniciar una solicitud cURL
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $newsApiUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-
+// Configurar encabezados personalizados
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'User-Agent: MyNewsApp/1.0'
 ]);
 
+// Ejecutar la solicitud y obtener la respuesta
 $newsResponse = curl_exec($ch);
 
 if (curl_errno($ch)) {
@@ -34,13 +38,14 @@ if (curl_errno($ch)) {
 
 curl_close($ch);
 
+// Decodificar la respuesta JSON
 $newsData = json_decode($newsResponse, true);
 
 if ($newsData['status'] !== 'ok') {
-    die('Error en la respuesta de la API: ' . $newsData['message']);
+    die('Error en la respuesta de la API: ' . ($newsData['message'] ?? 'Respuesta desconocida'));
 }
 
-
+// Generar autores aleatorios
 $authors = [];
 for ($i = 0; $i < 10; $i++) {
     $randomUserResponse = file_get_contents('https://randomuser.me/api/');
@@ -48,7 +53,7 @@ for ($i = 0; $i < 10; $i++) {
     $authors[] = $randomUserData['results'][0]['name']['first'] . ' ' . $randomUserData['results'][0]['name']['last'];
 }
 
-
+// Paginación
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $perPage = 10;
 $totalNews = count($newsData['articles']);
@@ -71,10 +76,10 @@ $articles = array_slice($newsData['articles'], $offset, $perPage);
         <?php foreach ($articles as $index => $article): ?>
             <div class="card mb-4">
                 <div class="card-body">
-                    <h2 class="card-title"><?php echo $article['title']; ?></h2>
-                    <p class="card-text"><?php echo $article['description']; ?></p>
-                    <p class="text-muted">Autor: <?php echo $authors[$index]; ?></p>
-                    <a href="<?php echo $article['url']; ?>" class="btn btn-primary">Leer más</a>
+                    <h2 class="card-title"><?php echo htmlspecialchars($article['title']); ?></h2>
+                    <p class="card-text"><?php echo htmlspecialchars($article['description']); ?></p>
+                    <p class="text-muted">Autor: <?php echo htmlspecialchars($authors[$index] ?? 'Desconocido'); ?></p>
+                    <a href="<?php echo htmlspecialchars($article['url']); ?>" class="btn btn-primary">Leer más</a>
                 </div>
             </div>
         <?php endforeach; ?>
