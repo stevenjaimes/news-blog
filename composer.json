@@ -1,0 +1,16 @@
+{
+    "name": "stevenjaimes/newsblog",
+    "description": "Un blog de noticias que utiliza la API de NewsAPI y autores aleatorios de RandomUser",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Steeven Jaimes",
+            "email": "hensteve250@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "vlucas/phpdotenv": "^5.4"
+    }
+}

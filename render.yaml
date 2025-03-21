@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: newsblog
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free 
